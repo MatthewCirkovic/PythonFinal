@@ -78,7 +78,6 @@ def main():
 
     while 1:
         timer.tick(60)
- #Helooooo
         for e in pygame.event.get():
             if e.type == QUIT: raise SystemExi( "QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
