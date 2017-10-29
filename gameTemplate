@@ -21,14 +21,13 @@ def main():
     pygame.display.set_caption("Use arrows to move!")
     timer = pygame.time.Clock()
 
-    up = down = left = right = running = False
+    up = down = left = right = running = attack = defend = False
     bg = Surface((32,32))
     bg.convert()
     bg.fill(Color("#000000"))
     entities = pygame.sprite.Group()
     player = Player(32, 32)
     platforms = []
-
     x = y = 0
     level = [
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
@@ -78,6 +77,9 @@ def main():
 
     while 1:
         timer.tick(60)
+        global posX, posY ## tracers of the x,y coordinate of the sprite
+        posX = player.rect.x
+        posY = player.rect.y
         for e in pygame.event.get():
             if e.type == QUIT: raise SystemExi( "QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
@@ -92,7 +94,11 @@ def main():
                 right = True
             if e.type == KEYDOWN and e.key == K_SPACE:
                 running = True
-
+            if e.type == KEYDOWN and e.key == K_a: #Having Trouble with shooting multiple attacks
+                attack = True                      #If you shoot more than once, the previous weapon
+                weapon = Weapon(8,8)               #Stops and remains on screen
+                entities.add(weapon)
+            
             if e.type == KEYUP and e.key == K_UP:
                 up = False
             if e.type == KEYUP and e.key == K_DOWN:
@@ -101,6 +107,7 @@ def main():
                 right = False
             if e.type == KEYUP and e.key == K_LEFT:
                 left = False
+                
 
         # draw background
         for y in range(32):
@@ -111,6 +118,8 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
+        if attack:
+            weapon.update(left, right, attack, platforms, entities)
         for e in entities:
             screen.blit(e.image, camera.apply(e))
 
@@ -146,7 +155,37 @@ def complex_camera(camera, target_rect):
 class Entity(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+#class for weapon
+class Weapon(Entity):
+    def __init__(self, x, y):
+        Entity.__init__(self)
+        self.xvel = 0
+        self.image = Surface((8,8))
+        self.image.fill(Color("#FF0000"))
+        self.image.convert()
+        self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
 
+    def update(self, left, right, attack, platforms, entities):
+        if attack:
+            self.xvel = 12
+        #if attack and left:
+        #    self.xvel = -8
+        self.rect.left += self.xvel
+        self.collide(self.xvel,0,platforms,entities) # checking for collisions with platforms
+
+    def collide(self, xvel, yvel, platforms, entities):
+         for p in platforms:
+            if pygame.sprite.collide_rect(self, p):
+                if xvel > 0:
+                    self.rect.right = p.rect.left
+                    attack = False
+                    entities.remove(self)#deleting the weapon from entities upon collision
+                if xvel < 0:
+                    self.rect.left = p.rect.right
+                    attack = False
+                    entities.remove(self)
+
+    
 class Player(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
@@ -205,7 +244,6 @@ class Player(Entity):
                     self.yvel = 0
                 if yvel < 0:
                     self.rect.top = p.rect.bottom
-
 
 class Platform(Entity):
     def __init__(self, x, y):
