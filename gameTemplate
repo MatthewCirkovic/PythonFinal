@@ -161,6 +161,16 @@ def complex_camera(camera, target_rect):
 class Entity(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+
+
+class Enemy(Entity):
+    def __init__(self, x, y):
+        Entity.__inity__(self)
+        self.xvel = -4
+        self.image = Surface((32,32))
+        self.image.fill(Color("yellow"))
+        self.image.convert()
+        self.rect = Rect(100, 0, 32, 32)
 #class for weapon
 class Weapon(Entity):
     def __init__(self, x, y):
