@@ -94,9 +94,13 @@ def main():
                 right = True
             if e.type == KEYDOWN and e.key == K_SPACE:
                 running = True
-            if e.type == KEYDOWN and e.key == K_a: #Having Trouble with shooting multiple attacks
-                attack = True                      #If you shoot more than once, the previous weapon
-                weapon = Weapon(8,8)               #Stops and remains on screen
+            if e.type == KEYDOWN and e.key == K_a:
+                try:
+                    entities.remove(weapon)
+                except UnboundLocalError:
+                    pass                 
+                attack = True   
+                weapon = Weapon(8,8)                                    
                 entities.add(weapon)
             
             if e.type == KEYUP and e.key == K_UP:
@@ -107,6 +111,8 @@ def main():
                 right = False
             if e.type == KEYUP and e.key == K_LEFT:
                 left = False
+            if e.type == KEYUP and e.key == K_a:
+                break
                 
 
         # draw background
@@ -118,7 +124,7 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
-        if attack:
+        if attack: 
             weapon.update(left, right, attack, platforms, entities)
         for e in entities:
             screen.blit(e.image, camera.apply(e))
