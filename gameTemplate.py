@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #MATT/CALEB/WYATT
 #PYTHON FINAL PROJECT WIREFRAME
-
+import math
 import pygame
 from pygame import *
 
@@ -27,8 +27,8 @@ def main():
     bg.convert()
     bg.fill(Color("#000000"))
     entities = pygame.sprite.Group()
-    enemy1 = Enemy(32,32)
     player = Player(32, 32)
+    enemy = Enemy(32, 32)
     platforms = []
     x = y = 0
     level = [
@@ -47,15 +47,15 @@ def main():
         "P                                          P",
         "P         PPPPPPP                          P",
         "P                                          P",
-        "P                     PPPPPP               P",
         "P                                          P",
-        "P   PPPPPPPPPPP                            P",
+        "P                                          P",
+        "P                                          P",
         "P                                          P",
         "P                 PPPPPPPPPPP              P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          E",
-        "P                                          E",
+        "PPPPPPPPPPPP      P         PP             P",
+        "P          PPPPPPPP         PPPP           P",
+        "P                           PPPPPPP        E",
+        "P                           PPPPPPPPP      E",
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
     # build the level
     for row in level:
@@ -76,7 +76,7 @@ def main():
     total_level_height = len(level)*32
     camera = Camera(complex_camera, total_level_width, total_level_height)
     entities.add(player)
-    entities.add(Enemy)
+    entities.add(enemy)
 
     while 1:
         timer.tick(60)
@@ -84,7 +84,7 @@ def main():
         posX = player.rect.x
         posY = player.rect.y
         for e in pygame.event.get():
-            if e.type == QUIT: raise SystemExit( "QUIT")
+            if e.type == QUIT: raise SystemExi( "QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
                 raise SystemExit( "ESCAPE")
             if e.type == KEYDOWN and e.key == K_UP:
@@ -127,6 +127,7 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
+        enemy.update(entities, platforms, attack)
         if attack: 
             weapon.update(left, right, attack, platforms, entities)
         for e in entities:
@@ -169,11 +170,49 @@ class Entity(pygame.sprite.Sprite):
 class Enemy(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
-        self.xvel = -4
+        self.xvel = -2
+        self.yvel = 0
+        self.onGround = False
         self.image = Surface((32,32))
-        self.image.fill(Color("yellow"))
+        self.image.fill(Color("#FFFF00"))
         self.image.convert()
-        self.rect = Rect(100, 0, 32, 32)
+        self.rect = Rect(WIN_WIDTH, WIN_HEIGHT, 32, 32)  
+
+
+    def update(self, entities, platforms, attack):
+        if self.yvel < 0: self.onGround = True
+        if not self.onGround: 
+            self.yvel += 0.3
+            if self.yvel > 100: self.yvel = 100
+        self.rect.left += self.xvel
+        self.collide(self.xvel,0, platforms)
+        self.rect.top += self.yvel
+        self.onGround=False
+        self.collide(0,self.yvel,platforms)
+    
+    def collide(self, xvel, yvel, platforms):
+        for p in platforms:
+            if pygame.sprite.collide_rect(self, p):
+                if xvel < 0:
+                    self.rect.left = p.rect.right
+                if xvel > 0:
+                    self.rect.right = p.rect.left
+                if yvel > 0:
+                    self.rect.bottom = p.rect.top
+                    self.onGround = True
+                    self.yvel = 0
+                if yvel < 0:
+                    self.rect.top = p.rect.bottom
+
+    def move_towards_player(self, player):
+        # find normalized direction vector (dx, dy) between enemy and player
+        dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
+        dist = math.hypot(dx, dy)
+        dx, dy = dx / dist, dy / dist
+        # move along this normalized vector towards the player at current speed
+        self.rect.x += dx * self.speed
+        self.rect.y += dy * self.speed
+
 #class for weapon
 class Weapon(Entity):
     def __init__(self, x, y):
@@ -242,7 +281,7 @@ class Player(Entity):
         # increment in y direction
         self.rect.top += self.yvel
         # assuming we're in the air
-        self.onGround = False;
+        self.onGround = False
         # do y-axis collisions
         self.collide(0, self.yvel, platforms)
 
