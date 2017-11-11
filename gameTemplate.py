@@ -2,6 +2,7 @@
 #MATT/CALEB/WYATT
 #PYTHON FINAL PROJECT WIREFRAME
 import math
+from math import sqrt
 import pygame
 from pygame import *
 
@@ -45,9 +46,9 @@ def main():
         "P                          PPPPPPP         P",
         "P                 PPPPPP                   P",
         "P                                          P",
-        "P         PPPPPPP                          P",
         "P                                          P",
         "P                                          P",
+        "P          PPPPPP                          P",
         "P                                          P",
         "P                                          P",
         "P                                          P",
@@ -127,7 +128,7 @@ def main():
 
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms)
-        enemy.update(entities, platforms, attack)
+        enemy.update(entities, platforms, attack, player)
         if attack: 
             weapon.update(left, right, attack, platforms, entities)
         for e in entities:
@@ -176,10 +177,10 @@ class Enemy(Entity):
         self.image = Surface((32,32))
         self.image.fill(Color("#FFFF00"))
         self.image.convert()
-        self.rect = Rect(WIN_WIDTH, WIN_HEIGHT, 32, 32)  
+        self.rect = Rect(WIN_WIDTH, y, 32, 32)  
 
 
-    def update(self, entities, platforms, attack):
+    def update(self, entities, platforms, attack, player):
         if self.yvel < 0: self.onGround = True
         if not self.onGround: 
             self.yvel += 0.3
@@ -189,12 +190,13 @@ class Enemy(Entity):
         self.rect.top += self.yvel
         self.onGround=False
         self.collide(0,self.yvel,platforms)
+        self.move_towards_player(player)
     
     def collide(self, xvel, yvel, platforms):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if xvel < 0:
-                    self.rect.left = p.rect.right
+                    self.rect.left = p.rect.right 
                 if xvel > 0:
                     self.rect.right = p.rect.left
                 if yvel > 0:
@@ -207,11 +209,15 @@ class Enemy(Entity):
     def move_towards_player(self, player):
         # find normalized direction vector (dx, dy) between enemy and player
         dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
-        dist = math.hypot(dx, dy)
+        dist = sqrt(dx**2 + dy**2)
         dx, dy = dx / dist, dy / dist
+        print(dy)
         # move along this normalized vector towards the player at current speed
-        self.rect.x += dx * self.speed
-        self.rect.y += dy * self.speed
+        if dx < 0:
+            self.rect.x += dx * self.xvel*4
+        else:
+            self.rect.x += dx * self.xvel
+        self.rect.y += dy * self.yvel
 
 #class for weapon
 class Weapon(Entity):
