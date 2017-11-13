@@ -17,7 +17,8 @@ FLAGS = 0
 CAMERA_SLACK = 30
 
 def main():
-    global cameraX, cameraY
+    global cameraX, cameraY, alive
+    alive = True
     pygame.init()
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
     pygame.display.set_caption("Use arrows to move!")
@@ -79,13 +80,14 @@ def main():
     entities.add(player)
     entities.add(enemy)
 
-    while 1:
+    while alive == True:
+        #alive = False
         timer.tick(60)
         global posX, posY ## tracers of the x,y coordinate of the sprite
         posX = player.rect.x
         posY = player.rect.y
         for e in pygame.event.get():
-            if e.type == QUIT: raise SystemExi( "QUIT")
+            if e.type == QUIT: raise SystemExit( "QUIT")
             if e.type == KEYDOWN and e.key == K_ESCAPE:
                 raise SystemExit( "ESCAPE")
             if e.type == KEYDOWN and e.key == K_UP:
@@ -102,7 +104,7 @@ def main():
                 try:
                     entities.remove(weapon)
                 except UnboundLocalError:
-                    pass                 
+                    pass                
                 attack = True   
                 weapon = Weapon(8,8)                                    
                 entities.add(weapon)
@@ -125,12 +127,11 @@ def main():
                 screen.blit(bg, (x * 32, y * 32))
 
         camera.update(player)
-
         # update player, draw everything else
-        player.update(up, down, left, right, running, platforms)
+        player.update(up, down, left, right, running, platforms, enemy, alive)
         enemy.update(entities, platforms, attack, player)
         if attack: 
-            weapon.update(left, right, attack, platforms, entities)
+            weapon.update(left, right, attack, platforms, entities, enemy)
         for e in entities:
             screen.blit(e.image, camera.apply(e))
 
@@ -186,13 +187,13 @@ class Enemy(Entity):
             self.yvel += 0.3
             if self.yvel > 100: self.yvel = 100
         self.rect.left += self.xvel
-        self.collide(self.xvel,0, platforms)
+        self.collide(self.xvel,0, platforms, player, entities)
         self.rect.top += self.yvel
         self.onGround=False
-        self.collide(0,self.yvel,platforms)
+        self.collide(0,self.yvel,platforms, player, entities)
         self.move_towards_player(player)
     
-    def collide(self, xvel, yvel, platforms):
+    def collide(self, xvel, yvel, platforms, player,entities):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if xvel < 0:
@@ -210,11 +211,14 @@ class Enemy(Entity):
         # find normalized direction vector (dx, dy) between enemy and player
         dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
         dist = sqrt(dx**2 + dy**2)
-        dx, dy = dx / dist, dy / dist
-        print(dy)
+        try: 
+            dx, dy = dx / dist, dy / dist
+        except ZeroDivisionError:
+            alive = False
+        #print(dy)
         # move along this normalized vector towards the player at current speed
         if dx < 0:
-            self.rect.x += dx * self.xvel*4
+            self.rect.x += dx * self.xvel*3
         else:
             self.rect.x += dx * self.xvel
         self.rect.y += dy * self.yvel
@@ -229,15 +233,15 @@ class Weapon(Entity):
         self.image.convert()
         self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
 
-    def update(self, left, right, attack, platforms, entities):
+    def update(self, left, right, attack, platforms, entities, enemy):
         if attack:
             self.xvel = 12
         #if attack and left:
         #    self.xvel = -8
         self.rect.left += self.xvel
-        self.collide(self.xvel,0,platforms,entities) # checking for collisions with platforms
+        self.collide(self.xvel,0,platforms,entities, enemy) # checking for collisions with platforms
 
-    def collide(self, xvel, yvel, platforms, entities):
+    def collide(self, xvel, yvel, platforms, entities, enemy):
          for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if xvel > 0:
@@ -248,6 +252,11 @@ class Weapon(Entity):
                     self.rect.left = p.rect.right
                     attack = False
                     entities.remove(self)
+            if pygame.sprite.collide_rect(self,enemy):
+                entities.remove(enemy)
+                entities.remove(self)
+                enemy.rect.x = 10000000000 ## clearing the enemy rectangle from screen upon death
+                enemy.rect.y = -1000000000
 
     
 class Player(Entity):
@@ -261,7 +270,7 @@ class Player(Entity):
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
 
-    def update(self, up, down, left, right, running, platforms):
+    def update(self, up, down, left, right, running, platforms, enemy, alive):
         if up:
             # only jump if on the ground
             if self.onGround: self.yvel -= 10
@@ -283,31 +292,35 @@ class Player(Entity):
         # increment in x direction
         self.rect.left += self.xvel
         # do x-axis collisions
-        self.collide(self.xvel, 0, platforms)
+        self.collide(self.xvel, 0, platforms, enemy, alive)
         # increment in y direction
         self.rect.top += self.yvel
         # assuming we're in the air
         self.onGround = False
         # do y-axis collisions
-        self.collide(0, self.yvel, platforms)
+        self.collide(0, self.yvel, platforms, enemy, alive)
 
-    def collide(self, xvel, yvel, platforms):
+    def collide(self, xvel, yvel, platforms, enemy, alive):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if isinstance(p, ExitBlock):
                     pygame.event.post(pygame.event.Event(QUIT))
                 if xvel > 0:
                     self.rect.right = p.rect.left
-                    print ("collide right")
+                    #print ("collide right")
                 if xvel < 0:
                     self.rect.left = p.rect.right
-                    print ("collide left")
+                    #print ("collide left")
                 if yvel > 0:
                     self.rect.bottom = p.rect.top
                     self.onGround = True
                     self.yvel = 0
                 if yvel < 0:
                     self.rect.top = p.rect.bottom
+            if pygame.sprite.collide_rect(self,enemy):
+                if enemy:
+                    raise SystemExit("YOU DIED...") #Death message
+                
 
 class Platform(Entity):
     def __init__(self, x, y):
