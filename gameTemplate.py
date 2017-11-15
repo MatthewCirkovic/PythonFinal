@@ -163,6 +163,7 @@ class Camera(object):
 def simple_camera(camera, target_rect):
     l, t, _, _ = target_rect
     _, _, w, h = camera
+    print(Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h))
     return Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h)
 
 def complex_camera(camera, target_rect):
@@ -252,6 +253,8 @@ class Weapon(Entity):
             self.xvel = 12
         if self.onScreen and face_left:
             self.xvel = -12
+        if self.onScreen and (self.rect.left+posX > HALF_WIDTH):
+            self.onScreen = False
         self.rect.left += self.xvel
         self.collide(self.xvel,0,platforms,entities, enemy) # checking for collisions with platforms
     def collide(self, xvel, yvel, platforms, entities, enemy):
