@@ -24,7 +24,8 @@ def main():
     pygame.display.set_caption("Use arrows to move!")
     timer = pygame.time.Clock()
 
-    up = down = left = right = running = attack = defend = False
+    up = down = left = right = running = attack = defend = face_left = False
+    face_right =True
     bg = Surface((32,32))
     bg.convert()
     bg.fill(Color("#000000"))
@@ -54,8 +55,8 @@ def main():
         "P                                          P",
         "P                                          P",
         "P                 PPPPPPPPPPP              P",
-        "PPPPPPPPPPPP      P         PP             P",
-        "P          PPPPPPPP         PPPP           P",
+        "PPPPPPPPPPPP      PP        PP             P",
+        "P         PPPPPPPPPP        PPPP           P",
         "P                           PPPPPPP        E",
         "P                           PPPPPPPPP      E",
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
@@ -96,8 +97,18 @@ def main():
                 down = True
             if e.type == KEYDOWN and e.key == K_LEFT:
                 left = True
+                if weapon.onScreen:
+                    pass
+                else:
+                    face_left = True
+                    face_right = False
             if e.type == KEYDOWN and e.key == K_RIGHT:
                 right = True
+                if weapon.onScreen:
+                    pass
+                else:
+                    face_right = True
+                    face_left = False
             if e.type == KEYDOWN and e.key == K_SPACE:
                 running = True
             if e.type == KEYDOWN and e.key == K_a:
@@ -118,7 +129,7 @@ def main():
             if e.type == KEYUP and e.key == K_LEFT:
                 left = False
             if e.type == KEYUP and e.key == K_a:
-                break
+                attack = False
                 
 
         # draw background
@@ -129,12 +140,13 @@ def main():
         camera.update(player)
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms, enemy, alive)
-        enemy.update(entities, platforms, attack, player)
-        if attack: 
-            weapon.update(left, right, attack, platforms, entities, enemy)
+        enemy.update(entities, platforms, attack, player) 
+        try :
+            weapon.update(left, right, platforms, entities, enemy, face_left, face_right)
+        except UnboundLocalError:
+            pass
         for e in entities:
             screen.blit(e.image, camera.apply(e))
-
         pygame.display.update()
 
 class Camera(object):
@@ -230,33 +242,35 @@ class Weapon(Entity):
         self.xvel = 0
         self.image = Surface((8,8))
         self.image.fill(Color("#FF0000"))
+        self.onScreen = True
         self.image.convert()
         self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
+        
 
-    def update(self, left, right, attack, platforms, entities, enemy):
-        if attack:
+    def update(self, left, right, platforms, entities, enemy, face_left, face_right):
+        if self.onScreen and face_right:
             self.xvel = 12
-        #if attack and left:
-        #    self.xvel = -8
+        if self.onScreen and face_left:
+            self.xvel = -12
         self.rect.left += self.xvel
         self.collide(self.xvel,0,platforms,entities, enemy) # checking for collisions with platforms
-
     def collide(self, xvel, yvel, platforms, entities, enemy):
          for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if xvel > 0:
                     self.rect.right = p.rect.left
-                    attack = False
+                    self.onScreen = False
                     entities.remove(self)#deleting the weapon from entities upon collision
                 if xvel < 0:
                     self.rect.left = p.rect.right
-                    attack = False
+                    self.onScreen = False
                     entities.remove(self)
             if pygame.sprite.collide_rect(self,enemy):
                 entities.remove(enemy)
                 entities.remove(self)
-                enemy.rect.x = 10000000000 ## clearing the enemy rectangle from screen upon death
+                enemy.rect.x = 10000000000
                 enemy.rect.y = -1000000000
+                self.onScreen = False
 
     
 class Player(Entity):
@@ -319,7 +333,7 @@ class Player(Entity):
                     self.rect.top = p.rect.bottom
             if pygame.sprite.collide_rect(self,enemy):
                 if enemy:
-                    raise SystemExit("YOU DIED...") #Death message
+                    raise SystemExit("YOU DIED...")
                 
 
 class Platform(Entity):
