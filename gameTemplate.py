@@ -97,18 +97,26 @@ def main():
                 down = True
             if e.type == KEYDOWN and e.key == K_LEFT:
                 left = True
-                if weapon.onScreen:
-                    pass
-                else:
-                    face_left = True
-                    face_right = False
+                try:
+                    if weapon.onScreen:
+                        pass
+                    else:
+                        face_left = True
+                        face_right = False
+                except UnboundLocalError:
+                        face_right = False
+                        face_left = True
             if e.type == KEYDOWN and e.key == K_RIGHT:
                 right = True
-                if weapon.onScreen:
-                    pass
-                else:
+                try:
+                    if weapon.onScreen:
+                        pass
+                    else:
+                        face_right = True
+                        face_left = False
+                except UnboundLocalError:
                     face_right = True
-                    face_left = False
+                    face_left = True
             if e.type == KEYDOWN and e.key == K_SPACE:
                 running = True
             if e.type == KEYDOWN and e.key == K_a:
