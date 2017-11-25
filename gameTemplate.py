@@ -19,6 +19,8 @@ CAMERA_SLACK = 30
 def main():
     global cameraX, cameraY, alive
     alive = True
+    back = pygame.image.load("background.jpg")
+    back = pygame.transform.scale(back, DISPLAY)
     pygame.init()
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
     pygame.display.set_caption("Use arrows to move!")
@@ -141,10 +143,11 @@ def main():
                 
 
         # draw background
-        for y in range(32):
-            for x in range(32):
-                screen.blit(bg, (x * 32, y * 32))
+        #for y in range(32):
+         #   for x in range(32):
+          #      screen.blit(bg, (x * 32, y * 32))
 
+        screen.blit(back,(0,0))
         camera.update(player)
         # update player, draw everything else
         player.update(up, down, left, right, running, platforms, enemy, alive)
@@ -233,7 +236,7 @@ class Enemy(Entity):
         dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
         dist = sqrt(dx**2 + dy**2)
         try: 
-            dx, dy = dx / dist, dy / dist
+            dx, dy = dx / dist, -(dy / dist)
         except ZeroDivisionError:
             alive = False
         #print(dy)
@@ -242,7 +245,8 @@ class Enemy(Entity):
             self.rect.x += dx * self.xvel*3
         else:
             self.rect.x += dx * self.xvel
-        self.rect.y += dy * self.yvel
+        print(self.yvel)
+        self.rect.y += dy * self.yvel*1.2
 
 #class for weapon
 class Weapon(Entity):
