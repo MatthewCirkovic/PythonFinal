@@ -71,7 +71,7 @@ def main():
                 platforms.append(p)
                 entities.add(p)
             if col == "G":
-                p = Platform(x, y)
+                p = Grass(x, y)
                 platforms.append(p)
                 entities.add(p)
             if col == "E":
@@ -361,7 +361,13 @@ class Platform(Entity):
         Entity.__init__(self)
         self.image = pygame.transform.scale(pygame.image.load("grass.jpg"),(32,32))
         #self.image.convert()
-        #self.image.fill(Color("#DDDDDD"))
+        self.image.fill(Color(255,255,255,128))
+        self.rect = Rect(x, y, 32, 32)
+
+class Grass(Platform):
+    def __init__(self, x, y):
+        Platform.__init__(self, x, y)
+        self.image = pygame.transform.scale(pygame.image.load("grass.jpg"),(32,32))
         self.rect = Rect(x, y, 32, 32)
 
     def update(self):
