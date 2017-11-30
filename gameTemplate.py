@@ -17,10 +17,11 @@ FLAGS = 0
 CAMERA_SLACK = 30
 
 def main():
+    
     global cameraX, cameraY, alive
     alive = True
     back = pygame.image.load("background.jpg")
-    back = pygame.transform.scale(back, DISPLAY)
+    #back = pygame.transform.scale(back, DISPLAY)
     pygame.init()
     screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
     pygame.display.set_caption("Use arrows to move!")
@@ -28,9 +29,9 @@ def main():
 
     up = down = left = right = running = attack = defend = face_left = False
     face_right =True
-    bg = Surface((32,32))
-    bg.convert()
-    bg.fill(Color("#000000"))
+    #bg = Surface((32,32))
+   # bg.convert()
+    #bg.fill(Color("#000000"))
     entities = pygame.sprite.Group()
     player = Player(32, 32)
     enemy = Enemy(32, 32)
@@ -41,24 +42,24 @@ def main():
         "P                                          P",
         "P                                          P",
         "P                                          P",
-        "P                    PPPPPPPPPPP           P",
         "P                                          P",
         "P                                          P",
         "P                                          P",
-        "P    PPPPPPPP                              P",
-        "P                                          P",
-        "P                          PPPPPPP         P",
-        "P                 PPPPPP                   P",
         "P                                          P",
         "P                                          P",
         "P                                          P",
-        "P          PPPPPP                          P",
         "P                                          P",
         "P                                          P",
         "P                                          P",
-        "P                 PPPPPPPPPPP              P",
-        "PPPPPPPPPPPP      PP        PP             P",
-        "P         PPPPPPPPPP        PPPP           P",
+        "P                                          P",
+        "P                                          P",
+        "P                                          P",
+        "P                                          P",
+        "P                                          P",
+        "P                                          P",
+        "P                                          P",
+        "PGGGGGGGGGGG                               P",
+        "P          GGGGGGGGGGGGGGGGGGGGG           P",
         "P                           PPPPPPP        E",
         "P                           PPPPPPPPP      E",
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
@@ -66,6 +67,10 @@ def main():
     for row in level:
         for col in row:
             if col == "P":
+                p = Platform(x, y)
+                platforms.append(p)
+                entities.add(p)
+            if col == "G":
                 p = Platform(x, y)
                 platforms.append(p)
                 entities.add(p)
@@ -354,18 +359,22 @@ class Player(Entity):
 class Platform(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
-        self.image = Surface((32, 32))
-        self.image.convert()
-        self.image.fill(Color("#DDDDDD"))
+        self.image = pygame.transform.scale(pygame.image.load("grass.jpg"),(32,32))
+        #self.image.convert()
+        #self.image.fill(Color("#DDDDDD"))
         self.rect = Rect(x, y, 32, 32)
 
     def update(self):
         pass
+
 
 class ExitBlock(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
         self.image.fill(Color("#0033FF"))
 
+
+
 if __name__ == "__main__":
     main()
+
