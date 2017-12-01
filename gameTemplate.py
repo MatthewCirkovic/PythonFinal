@@ -39,29 +39,29 @@ def main():
     x = y = 0
     level = [
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "P                                          P",
-        "PGGGGGGGGGGG                               P",
-        "P          GGGGGGGGGGGGGGGGGGGGG           P",
-        "P                           PPPPPPP        E",
-        "P                           PPPPPPPPP      E",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "PGGGGGGGGGGGGGGGGGGGGGG                 CCCP",
+        "PDDDDDDDDDDDDDDDDDDDDDD                 CCCP",
+        "PDDDDDDDDDDDDDDDDDDD                    CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "P                GGGGGGGGG              CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "P                      GGGGGGGGGGG      CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "P      GGGGGGGGGGGG                     CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "P                                       CCCP",
+        "PGGGGGG                                 CCCP",
+        "PDDDDDDGGGGGG                           CCCP",
+        "PDDDDDDDDDDDDGGGGGGGG                   CCCP",
+        "PDDDDDDDDDDDDDDDDDDDDGGGGGG             ECCP",
         "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
     # build the level
     for row in level:
@@ -72,6 +72,14 @@ def main():
                 entities.add(p)
             if col == "G":
                 p = Grass(x, y)
+                platforms.append(p)
+                entities.add(p)
+            if col == "D":
+                p = Dirt(x, y)
+                platforms.append(p)
+                entities.add(p)
+            if col == "C":
+                p = Castle(x, y)
                 platforms.append(p)
                 entities.add(p)
             if col == "E":
@@ -179,7 +187,7 @@ class Camera(object):
 def simple_camera(camera, target_rect):
     l, t, _, _ = target_rect
     _, _, w, h = camera
-    print(Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h))
+    #print(Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h))
     return Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h)
 
 def complex_camera(camera, target_rect):
@@ -250,8 +258,8 @@ class Enemy(Entity):
             self.rect.x += dx * self.xvel*3
         else:
             self.rect.x += dx * self.xvel
-        print(self.yvel)
-        self.rect.y += dy * self.yvel*1.2
+        #print(self.yvel)
+        #self.rect.y += dy * self.yvel*1.2
 
 #class for weapon
 class Weapon(Entity):
@@ -288,8 +296,6 @@ class Weapon(Entity):
             if pygame.sprite.collide_rect(self,enemy):
                 entities.remove(enemy)
                 entities.remove(self)
-                enemy.rect.x = 10000000000
-                enemy.rect.y = -1000000000
                 self.onScreen = False
 
     
@@ -373,14 +379,200 @@ class Grass(Platform):
     def update(self):
         pass
 
+class Dirt(Platform):
+    def __init__(self, x, y):
+        Platform.__init__(self, x, y)
+        self.image = pygame.transform.scale(pygame.image.load("dirt.jpg"),(32,32))
+        self.rect = Rect(x, y, 32, 32)
+
+    def update(self):
+        pass
+
+class Castle(Platform):
+    def __init__(self, x, y):
+        Platform.__init__(self, x, y)
+        self.image = pygame.transform.scale(pygame.image.load("brick.png"),(32,32))
+        self.rect = Rect(x, y, 32, 32)
+
+    def update(self):
+        pass
 
 class ExitBlock(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
-        self.image.fill(Color("#0033FF"))
+        self.image.fill(Color("#000000"))
+
+class Scene(object):
+    def __init__(self):
+        pass
+
+    def render(self, screen):
+        raise NotImplementedError
+
+    def update(self):
+        raise NotImplementedError
+
+    def handle_events(self, events):
+        raise NotImplementedError
+
+class GameScene(Scene):
+    def __init__(self):
+        super(GameScene, self).__init__()
+        global cameraX, cameraY, alive
+        alive = True
+        back = pygame.image.load("background.jpg")
+        #back = pygame.transform.scale(back, DISPLAY)
+        pygame.init()
+        screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
+        pygame.display.set_caption("Use arrows to move!")
+        timer = pygame.time.Clock()
+
+        up = down = left = right = running = attack = defend = face_left = False
+        face_right =True
+        #bg = Surface((32,32))
+        # bg.convert()
+        #bg.fill(Color("#000000"))
+        entities = pygame.sprite.Group()
+        player = Player(32, 32)
+        enemy = Enemy(32, 32)
+        platforms = []
+        x = y = 0
+        level = [
+            "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "PGGGGGGGGGGGGGGGGGGGGGG                 CCCP",
+            "PDDDDDDDDDDDDDDDDDDDDDD                 CCCP",
+            "PDDDDDDDDDDDDDDDDDDD                    CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "P                GGGGGGGGG              CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "P                      GGGGGGGGGGG      CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "P      GGGGGGGGGGGG                     CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "P                                       CCCP",
+            "PGGGGGG                                 CCCP",
+            "PDDDDDDGGGGGG                           CCCP",
+            "PDDDDDDDDDDDDGGGGGGGG                   CCCP",
+            "PDDDDDDDDDDDDDDDDDDDDGGGGGG             ECCP",
+            "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
+        # build the level
+        for row in level:
+            for col in row:
+                if col == "P":
+                    p = Platform(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "G":
+                    p = Grass(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "D":
+                    p = Dirt(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "C":
+                    p = Castle(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "E":
+                    e = ExitBlock(x, y)
+                    platforms.append(e)
+                    entities.add(e)
+                x += 32
+            y += 32
+            x = 0
+
+        total_level_width  = len(level[0])*32
+        total_level_height = len(level)*32
+        camera = Camera(complex_camera, total_level_width, total_level_height)
+        entities.add(player)
+        entities.add(enemy)
+
+        while alive == True:
+            #alive = False
+            timer.tick(60)
+            global posX, posY ## tracers of the x,y coordinate of the sprite
+            posX = player.rect.x
+            posY = player.rect.y
+            for e in pygame.event.get():
+            if e.type == QUIT: raise SystemExit( "QUIT")
+                if e.type == KEYDOWN and e.key == K_ESCAPE:
+                    raise SystemExit( "ESCAPE")
+                if e.type == KEYDOWN and e.key == K_UP:
+                    up = True
+                if e.type == KEYDOWN and e.key == K_DOWN:
+                    down = True
+                if e.type == KEYDOWN and e.key == K_LEFT:
+                    left = True
+                    try:
+                        if weapon.onScreen:
+                            pass
+                        else:
+                            face_left = True
+                            face_right = False
+                    except UnboundLocalError:
+                            face_right = False
+                            face_left = True
+                if e.type == KEYDOWN and e.key == K_RIGHT:
+                    right = True
+                    try:
+                        if weapon.onScreen:
+                            pass
+                        else:
+                            face_right = True
+                            face_left = False
+                    except UnboundLocalError:
+                        face_right = True
+                        face_left = True
+                if e.type == KEYDOWN and e.key == K_SPACE:
+                    running = True
+                if e.type == KEYDOWN and e.key == K_a:
+                    try:
+                        entities.remove(weapon)
+                    except UnboundLocalError:
+                        pass                
+                    attack = True   
+                    weapon = Weapon(8,8)                                    
+                    entities.add(weapon)
+
+                if e.type == KEYUP and e.key == K_UP:
+                    up = False
+                if e.type == KEYUP and e.key == K_DOWN:
+                    down = False
+                if e.type == KEYUP and e.key == K_RIGHT:
+                    right = False
+                if e.type == KEYUP and e.key == K_LEFT:
+                    left = False
+                if e.type == KEYUP and e.key == K_a:
+                    attack = False
 
 
+            # draw background
+            #for y in range(32):
+            #   for x in range(32):
+            #      screen.blit(bg, (x * 32, y * 32))
 
+            screen.blit(back,(0,0))
+            camera.update(player)
+            # update player, draw everything else
+            player.update(up, down, left, right, running, platforms, enemy, alive)
+            enemy.update(entities, platforms, attack, player) 
+            try :
+                weapon.update(left, right, platforms, entities, enemy, face_left, face_right)
+            except UnboundLocalError:
+                pass
+            for e in entities:
+                screen.blit(e.image, camera.apply(e))
+            pygame.display.update()
+    
 if __name__ == "__main__":
     main()
 
