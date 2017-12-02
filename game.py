@@ -168,8 +168,8 @@ class Player(Entity):
         self.xvel = 0
         self.yvel = 0
         self.onGround = False
-        self.image = pygame.image.load("knightRight.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (32, 32))
+        self.image = pygame.image.load("knightRight.png").convert_alpha() # Not set on this image, if you see something else you like
+        self.image = pygame.transform.scale(self.image, (32, 32))         #or if you can just get rid of the background that would be great
         #self.image.fill(Color("#0000FF"))
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
