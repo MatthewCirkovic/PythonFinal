@@ -22,7 +22,7 @@ def main():
     pygame.display.set_caption("SAVE THE PRINCESS!")
     timer = pygame.time.Clock()
     alive = True
-    scene = GameScene()
+    scene = GameScene(0)
 
     while alive:
         timer.tick(60)
@@ -66,7 +66,6 @@ class Entity(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-
 class Enemy(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
@@ -77,7 +76,6 @@ class Enemy(Entity):
         self.image.fill(Color("#FFFF00"))
         self.image.convert()
         self.rect = Rect(WIN_WIDTH, y, 32, 32)  
-
 
     def update(self, entities, platforms, attack, player):
         if self.yvel < 0: self.onGround = True
@@ -168,8 +166,10 @@ class Player(Entity):
         self.xvel = 0
         self.yvel = 0
         self.onGround = False
-        self.image = pygame.image.load("knightRight.png").convert_alpha() # Not set on this image, if you see something else you like
+        self.image = pygame.image.load("knightRight.png").convert() # Not set on this image, if you see something else you like
         self.image = pygame.transform.scale(self.image, (32, 32))         #or if you can just get rid of the background that would be great
+        transparentColor = self.image.get_at((0, 0))
+        self.image.set_colorkey(transparentColor)
         #self.image.fill(Color("#0000FF"))
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
@@ -184,11 +184,15 @@ class Player(Entity):
             self.xvel = 12
         if left:
             self.xvel = -8
-            self.image = pygame.image.load("knight.png").convert_alpha()
+            self.image = pygame.image.load("knight.png").convert()
+            transparentColor = self.image.get_at((0, 0))
+            self.image.set_colorkey(transparentColor)
             self.image = pygame.transform.scale(self.image, (32,32))
         if right:
             self.xvel = 8
-            self.image = pygame.image.load("knightRight.png").convert_alpha()
+            self.image = pygame.image.load("knightRight.png").convert()
+            transparentColor = self.image.get_at((0, 0))
+            self.image.set_colorkey(transparentColor)
             self.image = pygame.transform.scale(self.image, (32, 32))
         if not self.onGround:
             # only accelerate with gravity if in the air
@@ -283,8 +287,40 @@ class Scene(object):
     def handle_events(self, events):
         raise NotImplementedError
 
-class GameScene(Scene):
+class TitleScene(object):
+    
     def __init__(self):
+        super(TitleScene, self).__init__()
+        self.font = pygame.font.SysFont('Arial', 56)
+        self.sfont = pygame.font.SysFont('Arial', 32)
+
+    def render(self, screen):
+        # beware: ugly! 
+        screen.fill((0, 200, 0))
+        text1 = self.font.render('Crazy Game', True, (255, 255, 255))
+        text2 = self.sfont.render('> press space to start <', True, (255, 255, 255))
+        screen.blit(text1, (200, 50))
+        screen.blit(text2, (200, 350))
+
+    def update(self):
+        pass
+
+    def handle_events(self, events):
+        for e in events:
+            if e.type == KEYDOWN and e.key == K_SPACE:
+                self.manager.go_to(GameScene(0))
+
+class SceneMananger(object):
+    def __init__(self):
+        self.go_to(TitleScene())
+
+    def go_to(self, scene):
+        self.scene = scene
+        self.scene.manager = self
+
+
+class GameScene(Scene):
+    def __init__(self, level):
         super(GameScene, self).__init__()
         global cameraX, cameraY, alive
         alive = True
@@ -292,7 +328,7 @@ class GameScene(Scene):
         #back = pygame.transform.scale(back, DISPLAY)
         pygame.init()
         screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
-        pygame.display.set_caption("Use arrows to move!")
+        pygame.display.set_caption("SAVE THE PRINCESS")
         timer = pygame.time.Clock()
         up = down = left = right = running = attack = defend = face_left = False
         face_right =True
