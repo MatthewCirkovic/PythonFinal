@@ -11,6 +11,61 @@ WIN_HEIGHT = 640
 HALF_WIDTH = int(WIN_WIDTH / 2)
 HALF_HEIGHT = int(WIN_HEIGHT / 2)
 
+back1 = pygame.image.load("background.jpg")
+back2 = pygame.image.load("background2.jpg")
+
+level1 = [
+                "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "PGGGGGGGGGGGGGGGGGGGGGG                 CCCP",
+                "PDDDDDDDDDDDDDDDDDDDDDD                 CCCP",
+                "PDDDDDDDDDDDDDDDDDDD                    CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                GGGGGGGGG              CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                      GGGGGGGGGGG      CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P      GGGGGGGGGGGG                     CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "PGGGGGG                                 CCCP",
+                "PDDDDDDGGGGGG                           CCCP",
+                "PDDDDDDDDDDDDGGGGGGGG                   CCCP",
+                "PDDDDDDDDDDDDDDDDDDDDGGGGGG             ECCP",
+                "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
+level2 = [
+                "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "PCCCCCCCCCCCCCCCCCCCCCC  CCCCCCCCCCCCCCCCCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "PCCCC  CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "PCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC  CCCCCCCCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       CCCP",
+                "P                                       ECCP",
+                "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
 DEPTH = 32
 FLAGS = 0
@@ -22,7 +77,8 @@ def main():
     pygame.display.set_caption("SAVE THE PRINCESS!")
     timer = pygame.time.Clock()
     alive = True
-    scene = GameScene(0)
+    #title = TitleScene()
+    scene = GameScene(0, back1, level1)
 
     while alive:
         timer.tick(60)
@@ -72,8 +128,10 @@ class Enemy(Entity):
         self.xvel = -2
         self.yvel = 0
         self.onGround = False
-        self.image = Surface((32,32))
-        self.image.fill(Color("#FFFF00"))
+        self.image = pygame.image.load("ghost.png").convert()
+        self.image = pygame.transform.scale(self.image,(32,32))
+        transparentColor = self.image.get_at((0, 0))
+        self.image.set_colorkey(transparentColor)
         self.image.convert()
         self.rect = Rect(WIN_WIDTH, y, 32, 32)  
 
@@ -155,9 +213,6 @@ class Weapon(Entity):
             if pygame.sprite.collide_rect(self,enemy):
                 entities.remove(enemy)
                 entities.remove(self)
-                enemy.rect.x = 10000000000
-                enemy.rect.y = -1000000000
-                self.onScreen = False
 
     
 class Player(Entity):
@@ -215,8 +270,8 @@ class Player(Entity):
     def collide(self, xvel, yvel, platforms, enemy, alive):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
-                if isinstance(p, ExitBlock):
-                    pygame.event.post(pygame.event.Event(QUIT))
+                if isinstance(p, ExitBlock1):
+                    scene = GameScene(0, back2, level2)
                 if xvel > 0:
                     self.rect.right = p.rect.left
                     #print ("collide right")
@@ -269,7 +324,7 @@ class Castle(Platform):
     def update(self):
         pass
 
-class ExitBlock(Platform):
+class ExitBlock1(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
         self.image.fill(Color("#000000"))
@@ -308,7 +363,7 @@ class TitleScene(object):
     def handle_events(self, events):
         for e in events:
             if e.type == KEYDOWN and e.key == K_SPACE:
-                self.manager.go_to(GameScene(0))
+                self.manager.go_to(GameScene(0, back1))
 
 class SceneMananger(object):
     def __init__(self):
@@ -320,11 +375,11 @@ class SceneMananger(object):
 
 
 class GameScene(Scene):
-    def __init__(self, level):
+    def __init__(self, level, bg, level_set):
         super(GameScene, self).__init__()
         global cameraX, cameraY, alive
         alive = True
-        back = pygame.image.load("background.jpg")
+        back = bg
         #back = pygame.transform.scale(back, DISPLAY)
         pygame.init()
         screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
@@ -340,32 +395,8 @@ class GameScene(Scene):
         enemy = Enemy(32, 32)
         platforms = []
         x = y = 0
-        level = [
-                "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "PGGGGGGGGGGGGGGGGGGGGGG                 CCCP",
-                "PDDDDDDDDDDDDDDDDDDDDDD                 CCCP",
-                "PDDDDDDDDDDDDDDDDDDD                    CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                GGGGGGGGG              CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                      GGGGGGGGGGG      CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P      GGGGGGGGGGGG                     CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "PGGGGGG                                 CCCP",
-                "PDDDDDDGGGGGG                           CCCP",
-                "PDDDDDDDDDDDDGGGGGGGG                   CCCP",
-                "PDDDDDDDDDDDDDDDDDDDDGGGGGG             ECCP",
-                "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
+        level = level_set
+        
     # build the level
         for row in level:
             for col in row:
@@ -386,7 +417,7 @@ class GameScene(Scene):
                     platforms.append(p)
                     entities.add(p)
                 if col == "E":
-                    e = ExitBlock(x, y)
+                    e = ExitBlock1(x, y)
                     platforms.append(e)
                     entities.add(e)
                 x += 32
