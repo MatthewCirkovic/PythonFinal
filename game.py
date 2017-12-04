@@ -5,6 +5,7 @@ import math
 from math import sqrt
 import pygame
 from pygame import *
+import time
 
 WIN_WIDTH = 800
 WIN_HEIGHT = 640
@@ -125,7 +126,7 @@ class Entity(pygame.sprite.Sprite):
 class Enemy(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
-        self.xvel = -2
+        self.xvel = -1
         self.yvel = 0
         self.onGround = False
         self.image = pygame.image.load("ghost.png").convert()
@@ -140,12 +141,16 @@ class Enemy(Entity):
         if not self.onGround: 
             self.yvel += 0.3
             if self.yvel > 100: self.yvel = 100
-        self.rect.left += self.xvel
         self.collide(self.xvel,0, platforms, player, entities)
+        self.rect.left += self.xvel
         self.rect.top += self.yvel
         self.onGround=False
         self.collide(0,self.yvel,platforms, player, entities)
-        self.move_towards_player(player)
+        if (abs(self.rect.x-player.rect.x) < (WIN_WIDTH/4)):
+            self.move_towards_player(player)
+        else:
+            #self.patrol()
+            pass
     
     def collide(self, xvel, yvel, platforms, player,entities):
         for p in platforms:
@@ -163,20 +168,27 @@ class Enemy(Entity):
 
     def move_towards_player(self, player):
         # find normalized direction vector (dx, dy) between enemy and player
-        dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
-        dist = sqrt(dx**2 + dy**2)
-        try: 
-            dx, dy = dx / dist, -(dy / dist)
-        except ZeroDivisionError:
-            alive = False
+        if (abs(self.rect.x-player.rect.x) < (WIN_WIDTH/4)):
+            dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
+            dist = sqrt(dx**2 + dy**2)
+            try: 
+                dx, dy = dx / dist, -(dy / dist)
+            except ZeroDivisionError:
+                alive = False
         #print(dy)
         # move along this normalized vector towards the player at current speed
-        if dx < 0:
-            self.rect.x += dx * self.xvel*3
-        else:
-            self.rect.x += dx * self.xvel
+            if dx < 0:
+                self.rect.x += dx * self.xvel*3
+            else:
+                self.rect.x += dx * self.xvel
         #print(self.yvel)
         #self.rect.y += dy * self.yvel*1.2
+    #def patrol(self):
+        #pygame.time.Clock()
+        #if (pygame.time.Clock.get_time()%1000%2 == 0):
+        #    self.xvel = -2
+        #else:
+        #    self.xvel = 2
 
 #class for weapon
 class Weapon(Entity):
@@ -185,6 +197,11 @@ class Weapon(Entity):
         self.xvel = 0
         self.image = Surface((8,8))
         self.image.fill(Color("#FF0000"))
+        self.image = pygame.image.load("knife.png").convert()#could try for a knife left image as well.
+        transparentColor = self.image.get_at((0, 0))
+        self.image.set_colorkey(transparentColor)
+        self.image = pygame.transform.scale(self.image, (32,32))
+
         self.onScreen = True
         self.image.convert()
         self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
@@ -213,6 +230,9 @@ class Weapon(Entity):
             if pygame.sprite.collide_rect(self,enemy):
                 entities.remove(enemy)
                 entities.remove(self)
+                enemy.rect.x = -1
+                enemy.rect.y = -1
+                self.onScreen = False
 
     
 class Player(Entity):
