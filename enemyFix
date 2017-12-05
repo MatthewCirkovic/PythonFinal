@@ -1,0 +1,13 @@
+def patrol(self):
+        if  int(pygame.time.get_ticks()/1000%2) == 0:
+            self.xvel = 2
+        else:
+            self.xvel = -2
+#new enemy locations
+#Scene1
+enemy1 = Enemy(1200, 600)
+enemy2 = Enemy(450, 100)
+#Scene2
+enemy1 = Enemy(400, 32)
+enemy2 = Enemy(500, 150)
+enemy3 = Enemy(500, 250)
