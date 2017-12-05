@@ -128,7 +128,7 @@ class Entity(pygame.sprite.Sprite):
 class Enemy(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
-        self.xvel = -1
+        self.xvel = -2
         self.yvel = 0
         self.onGround = False
         self.image = pygame.image.load("ghost.png").convert()
@@ -143,24 +143,26 @@ class Enemy(Entity):
         if not self.onGround: 
             self.yvel += 0.3
             if self.yvel > 100: self.yvel = 100
-        self.collide(self.xvel,0, platforms, player, entities)
         self.rect.left += self.xvel
+        self.collide(self.xvel,0, platforms, player, entities)
         self.rect.top += self.yvel
         self.onGround = False
         self.collide(0,self.yvel,platforms, player, entities)
-        if (abs(self.rect.x-player.rect.x) < (WIN_WIDTH/4)):
+        if (abs(self.rect.x-player.rect.x) < (WIN_WIDTH/3)):
             self.move_towards_player(player)
         else:
-            #self.patrol()
-            pass
+            self.patrol()
+            
 
     def collide(self, xvel, yvel, platforms, player, entities):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if xvel < 0:
                     self.rect.left = p.rect.right 
+                    #self.yvel = 0
                 if xvel > 0:
                     self.rect.right = p.rect.left
+                    #self.yvel = 0
                 if yvel > 0:
                     self.rect.bottom = p.rect.top
                     #self.onGround = True
@@ -185,10 +187,12 @@ class Enemy(Entity):
         #print(self.yvel)
         #self.rect.y += dy * self.yvel*1.2
     def patrol(self):
-        if pygame.time.get_ticks()%2000 == 0:
+        if  int(pygame.time.get_ticks()/1000%2) == 0:
             self.xvel = 2
+            #print("here")
         else:
             self.xvel = -2
+            #print("noHere")
 
 #class for weapon
 class Weapon(Entity):
@@ -201,7 +205,6 @@ class Weapon(Entity):
         transparentColor = self.image.get_at((0, 0))
         self.image.set_colorkey(transparentColor)
         self.image = pygame.transform.scale(self.image, (40,40))
-
         self.onScreen = True
         self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
         
@@ -256,16 +259,14 @@ class Player(Entity):
                 if self.onGround: self.yvel -= 10
             if down:
                 pass
-            if running:
-                self.xvel = 12
             if left:
-                self.xvel = -8
+                self.xvel = -6
                 self.image = pygame.image.load("knight.png").convert()
                 transparentColor = self.image.get_at((0, 0))
                 self.image.set_colorkey(transparentColor)
                 self.image = pygame.transform.scale(self.image, (32,32))
             if right:
-                self.xvel = 8
+                self.xvel = 6
                 self.image = pygame.image.load("knightRight.png").convert()
                 transparentColor = self.image.get_at((0, 0))
                 self.image.set_colorkey(transparentColor)
@@ -414,8 +415,8 @@ class Scene1(Scene):
     #bg.fill(Color("#000000"))
         entities = pygame.sprite.Group()
         player = Player(100, 600)
-        enemy1 = Enemy(400, 600)
-        enemy2 = Enemy(100, 400)
+        enemy1 = Enemy(1200, 600)
+        enemy2 = Enemy(450, 100)
         platforms = []
         x = y = 0
         level = level_set
@@ -550,12 +551,14 @@ class Scene2(Scene):
         entities = pygame.sprite.Group()
         player = Player(32, 32)
         enemy1 = Enemy(400, 32)
-        enemy2 = Enemy(100, 200)
+        enemy2 = Enemy(500, 150)
+        enemy3 = Enemy(500, 250)
         platforms = []
         x = y = 0
         level = level_set
         enemies.append(enemy1)
         enemies.append(enemy2)
+        enemies.append(enemy3)
         
         for row in level:
             for col in row:
@@ -589,6 +592,7 @@ class Scene2(Scene):
         entities.add(player)
         entities.add(enemy1)
         entities.add(enemy2)
+        entities.add(enemy3)
 
 
         while alive == True:
@@ -661,6 +665,7 @@ class Scene2(Scene):
             player.update(up, down, left, right, running, platforms, enemies, alive)
             enemy1.update(entities, platforms, attack, player) 
             enemy2.update(entities, platforms, attack, player) 
+            enemy3.update(entities, platforms, attack, player)
             try :
                 weapon.update(left, right, platforms, entities, enemies, face_left, face_right)
             except UnboundLocalError:
