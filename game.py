@@ -1,6 +1,7 @@
 #! /usr/bin/python
-#MATT/CALEB/WYATT
-#PYTHON FINAL PROJECT WIREFRAME
+# Matthew Cirkovic
+# Wyatt Hurst
+
 import math
 from math import sqrt
 import pygame
@@ -104,13 +105,12 @@ CAMERA_SLACK = 30
 enemies = []
 
 def main():
-    pygame.init()
+    pygame.init() #initialize the module
     sreen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
     pygame.display.set_caption("SAVE THE PRINCESS!")
     timer = pygame.time.Clock()
     alive = True
-    #title = TitleScene()
-    scene = Scene1(0, back1, level1)
+    scene = Scene1(0, back1, level1) #start first scene
 
     while alive:
         timer.tick(60)
@@ -136,7 +136,6 @@ class Camera(object):
 def simple_camera(camera, target_rect):
     l, t, _, _ = target_rect
     _, _, w, h = camera
-    #print(Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h))
     return Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h)
 
 def complex_camera(camera, target_rect):
@@ -192,48 +191,40 @@ class Enemy(Entity):
                     self.rect.right = p.rect.left
                 if yvel > 0:
                     self.rect.bottom = p.rect.top
-                    #self.onGround = True
                     self.yvel = 0
                 if yvel < 0:
                     self.rect.top = p.rect.bottom
 
     def move_towards_player(self, player):
-        # find normalized direction vector (dx, dy) between enemy and player
         dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
         dist = sqrt(dx**2 + dy**2)
         try: 
             dx, dy = dx / dist, -(dy / dist)
         except ZeroDivisionError:
             alive = False
-        #print(dy)
-        # move along this normalized vector towards the player at current speed
         if dx < 0:
             self.rect.x += dx * self.xvel*3
         else:
             self.rect.x += dx * self.xvel
-        #print(self.yvel)
-        #self.rect.y += dy * self.yvel*1.2
+
     def patrol(self):
         if  int(pygame.time.get_ticks()/1000%2) == 0:
             self.xvel = 2
         else:
             self.xvel = -2
 
-#class for weapon
 class Weapon(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
         self.xvel = 0
         self.image = Surface((8,8))
         self.image.fill(Color("#FF0000"))
-        self.image = pygame.image.load("knife.png").convert()#could try for a knife left image as well.
+        self.image = pygame.image.load("knife.png").convert()
         transparentColor = self.image.get_at((0, 0))
         self.image.set_colorkey(transparentColor)
         self.image = pygame.transform.scale(self.image, (40,40))
-
         self.onScreen = True
-        self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
-        
+        self.rect = Rect(posX,posY, 8, 8)
 
     def update(self, left, right, platforms, entities, enemies, face_left, face_right):
         if self.onScreen and face_right:
@@ -245,6 +236,7 @@ class Weapon(Entity):
         self.rect.left += self.xvel
         for enemy in enemies:
             self.collide(self.xvel,0,platforms,entities, enemy) # checking for collisions with platforms
+
     def collide(self, xvel, yvel, platforms, entities, enemy):
          for p in platforms:
             if pygame.sprite.collide_rect(self, p):
@@ -263,19 +255,16 @@ class Weapon(Entity):
                 enemy.rect.y = -1
                 self.onScreen = False
 
-    
 class Player(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
         self.xvel = 0
         self.yvel = 0
         self.onGround = False
-        self.image = pygame.image.load("knightRight.png").convert() # Not set on this image, if you see something else you like
-        self.image = pygame.transform.scale(self.image, (32, 32))         #or if you can just get rid of the background that would be great
+        self.image = pygame.image.load("knightRight.png").convert()
+        self.image = pygame.transform.scale(self.image, (32, 32))
         transparentColor = self.image.get_at((0, 0))
         self.image.set_colorkey(transparentColor)
-        #self.image.fill(Color("#0000FF"))
-        self.image.convert()
         self.rect = Rect(x, y, 32, 32)
 
     def update(self, up, down, left, right, running, platforms, enemies, alive):
@@ -329,10 +318,8 @@ class Player(Entity):
                         raise SystemExit("GOODBYE")
                     if xvel > 0:
                         self.rect.right = p.rect.left
-                        #print ("collide right")
                     if xvel < 0:
                         self.rect.left = p.rect.right
-                        #print ("collide left")
                     if yvel > 0:
                         self.rect.bottom = p.rect.top
                         self.onGround = True
@@ -348,7 +335,6 @@ class Platform(Entity):
     def __init__(self, x, y):
         Entity.__init__(self)
         self.image = pygame.transform.scale(pygame.image.load("grass.jpg"),(32,32))
-        #self.image.convert()
         self.image.fill(Color(255,255,255,128))
         self.rect = Rect(x, y, 32, 32)
 
@@ -383,15 +369,14 @@ class ExitBlock(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
         self.image.fill(Color(255, 0, 0))
+
 class ExitBlock1(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
-        #self.image.fill(Color(255, 255, 255, 128))
 
 class ExitBlock2(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
-        #self.image.fill(Color(255, 255, 255, 128))
 
 class Scene(object):
     def __init__(self):
@@ -406,53 +391,18 @@ class Scene(object):
     def handle_events(self, events):
         raise NotImplementedError
 
-class TitleScene(object):
-    
-    def __init__(self):
-        super(TitleScene, self).__init__()
-        self.font = pygame.font.SysFont('Arial', 56)
-        self.sfont = pygame.font.SysFont('Arial', 32)
-
-    def render(self, screen):
-        # beware: ugly! 
-        screen.fill((0, 200, 0))
-        text1 = self.font.render('Crazy Game', True, (255, 255, 255))
-        text2 = self.sfont.render('> press space to start <', True, (255, 255, 255))
-        screen.blit(text1, (200, 50))
-        screen.blit(text2, (200, 350))
-
-    def update(self):
-        pass
-
-    def handle_events(self, events):
-        for e in events:
-            if e.type == KEYDOWN and e.key == K_SPACE:
-                self.manager.go_to(GameScene(0, back1))
-
-#class SceneMananger(object):
-    def __init__(self):
-        self.go_to(TitleScene())
-
-    def go_to(self, scene):
-        self.scene = scene
-        self.scene.manager = self
-
 class Scene1(Scene):
     def __init__(self, level, bg, level_set):
         super(Scene1, self).__init__()
         global cameraX, cameraY, alive
         alive = True
         back = bg
-        #back = pygame.transform.scale(back, DISPLAY)
         pygame.init()
         screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
         pygame.display.set_caption("SAVE THE PRINCESS")
         timer = pygame.time.Clock()
         up = down = left = right = running = attack = defend = face_left = False
         face_right =True
-    #bg = Surface((32,32))
-   # bg.convert()
-    #bg.fill(Color("#000000"))
         entities = pygame.sprite.Group()
         player = Player(100, 600)
         enemy1 = Enemy(1200, 600)
@@ -463,7 +413,7 @@ class Scene1(Scene):
         enemies.append(enemy1)
         enemies.append(enemy2)
         
-    # build the level
+        # build the level
         for row in level:
             for col in row:
                 if col == "P":
@@ -497,11 +447,9 @@ class Scene1(Scene):
         entities.add(enemy1)
         entities.add(enemy2)
 
-
         while alive == True:
-        #alive = False
             timer.tick(60)
-            global posX, posY ## tracers of the x,y coordinate of the sprite
+            global posX, posY
             posX = player.rect.x
             posY = player.rect.y
             for e in pygame.event.get():
@@ -555,16 +503,9 @@ class Scene1(Scene):
                     left = False
                 if e.type == KEYUP and e.key == K_a:
                     attack = False
-                
-
-        # draw background
-        #for y in range(32):
-         #   for x in range(32):
-          #      screen.blit(bg, (x * 32, y * 32))
 
             screen.blit(back,(0,0))
             camera.update(player)
-        # update player, draw everything else
             player.update(up, down, left, right, running, platforms, enemies, alive)
             enemy1.update(entities, platforms, attack, player) 
             enemy2.update(entities, platforms, attack, player) 
@@ -636,9 +577,8 @@ class Scene2(Scene):
 
 
         while alive == True:
-        #alive = False
             timer.tick(60)
-            global posX, posY ## tracers of the x,y coordinate of the sprite
+            global posX, posY
             posX = player.rect.x
             posY = player.rect.y
             for e in pygame.event.get():
@@ -692,16 +632,9 @@ class Scene2(Scene):
                     left = False
                 if e.type == KEYUP and e.key == K_a:
                     attack = False
-                
-
-        # draw background
-        #for y in range(32):
-        #   for x in range(32):
-        #      screen.blit(bg, (x * 32, y * 32))
 
             screen.blit(back,(0,0))
             camera.update(player)
-        # update player, draw everything else
             player.update(up, down, left, right, running, platforms, enemies, alive)
             enemy1.update(entities, platforms, attack, player) 
             enemy2.update(entities, platforms, attack, player)
@@ -713,7 +646,7 @@ class Scene2(Scene):
             for e in entities:
                 screen.blit(e.image, camera.apply(e))
             pygame.display.update()
-            
+
 class Scene3(Scene):
     def __init__(self, level, bg, level_set):
         super(Scene3, self).__init__()
@@ -729,12 +662,10 @@ class Scene3(Scene):
         entities = pygame.sprite.Group()
         player = Player(32, 32)
         enemy1 = Enemy(-1, 1)
-        #enemy2 = Enemy(100, 200)
         platforms = []
         x = y = 0
         level = level_set
         enemies.append(enemy1)
-        #enemies.append(enemy2)
         
         for row in level:
             for col in row:
@@ -767,13 +698,10 @@ class Scene3(Scene):
         camera = Camera(complex_camera, total_level_width, total_level_height)
         entities.add(player)
         entities.add(enemy1)
-        #entities.add(enemy2)
-
 
         while alive == True:
-        #alive = False
             timer.tick(60)
-            global posX, posY ## tracers of the x,y coordinate of the sprite
+            global posX, posY
             posX = player.rect.x
             posY = player.rect.y
             for e in pygame.event.get():
@@ -827,19 +755,11 @@ class Scene3(Scene):
                     left = False
                 if e.type == KEYUP and e.key == K_a:
                     attack = False
-                
-
-        # draw background
-        #for y in range(32):
-        #   for x in range(32):
-        #      screen.blit(bg, (x * 32, y * 32))
-
+            
             screen.blit(back,(0,0))
             camera.update(player)
-        # update player, draw everything else
             player.update(up, down, left, right, running, platforms, enemies, alive)
             enemy1.update(entities, platforms, attack, player) 
-            #enemy2.update(entities, platforms, attack, player) 
             try :
                 weapon.update(left, right, platforms, entities, enemies, face_left, face_right)
             except UnboundLocalError:
@@ -850,6 +770,3 @@ class Scene3(Scene):
 
 if __name__ == "__main__":
     main()
-
-   
-    
