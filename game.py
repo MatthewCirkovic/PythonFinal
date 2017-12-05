@@ -17,30 +17,31 @@ back2 = pygame.image.load("background2.jpg")
 
 level1 = [
                 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "PGGGGGGGGGGGGGGGGGGGGGG                 CCCP",
-                "PDDDDDDDDDDDDDDDDDDDDDD                 CCCP",
-                "PDDDDDDDDDDDDDDDDDDD                    CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                GGGGGGGGG              CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                      GGGGGGGGGGG      CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P      GGGGGGGGGGGG                     CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "PGGGGGG                                 CCCP",
-                "PDDDDDDGGGGGG                           CCCP",
-                "PDDDDDDDDDDDDGGGGGGGG                   CCCP",
-                "PDDDDDDDDDDDDDDDDDDDDGGGGGG             ECCP",
+                "PCC                                     CCCP",
+                "PCC                                     CCCP",
+                "PCC                                     CCCP",
+                "PCC                                     CCCP",
+                "PCC                                     CCCP",
+                "PCC                                     CCCP",
+                "PCC                                     CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCCCC        CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC          CCCCC                      CCCP",
+                "PCC        CCCCCCC                      CCCP",
+                "PCC          CCCCC                         1",
+                "PCC          CCCCC        CCCCCCCCCCCCCCCCCP",
+                "PCC          CCCCC       GCCCCCCCCCCCCCCCCCP",
+                "PCC          CCCCC      GDCCCCCCCCCCCCCCCCCP",
+                "PGGGGGGGGGGGGDDDDDGGGGGGDDCCCCCCCCCCCCCCCCCP",
                 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
+
 level2 = [
                 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
                 "P                                       CCCP",
@@ -53,24 +54,25 @@ level2 = [
                 "P                                       CCCP",
                 "PCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC  CCCCCCCCCP",
                 "P                                       CCCP",
+                "P                                 C     CCCP",
+                "P                                C      CCCP",
+                "P                               C       CCCP",
+                "P                              C        CCCP",
+                "P                             C         CCCP",
+                "P         CCCCCCCCCCCCCCCCCCCC          CCCP",
                 "P                                       CCCP",
                 "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       CCCP",
-                "P                                       ECCP",
+                "PCCCCCCCCCCCCCCCCCCCC                   CCCP",
+                "P                    CC                 CCCP",
+                "P                      CC               CCCP",
+                "P                        CC             CCCP",
+                "P                          CC              1",
                 "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",]
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
 DEPTH = 32
 FLAGS = 0
 CAMERA_SLACK = 30
+enemies = []
 
 def main():
     pygame.init()
@@ -79,7 +81,7 @@ def main():
     timer = pygame.time.Clock()
     alive = True
     #title = TitleScene()
-    scene = GameScene(0, back1, level1)
+    scene = Scene1(0, back1, level1)
 
     while alive:
         timer.tick(60)
@@ -134,7 +136,7 @@ class Enemy(Entity):
         transparentColor = self.image.get_at((0, 0))
         self.image.set_colorkey(transparentColor)
         self.image.convert()
-        self.rect = Rect(WIN_WIDTH, y, 32, 32)  
+        self.rect = Rect(x, y, 32, 32)  
 
     def update(self, entities, platforms, attack, player):
         if self.yvel < 0: self.onGround = True
@@ -144,15 +146,15 @@ class Enemy(Entity):
         self.collide(self.xvel,0, platforms, player, entities)
         self.rect.left += self.xvel
         self.rect.top += self.yvel
-        self.onGround=False
+        self.onGround = False
         self.collide(0,self.yvel,platforms, player, entities)
         if (abs(self.rect.x-player.rect.x) < (WIN_WIDTH/4)):
             self.move_towards_player(player)
         else:
             #self.patrol()
             pass
-    
-    def collide(self, xvel, yvel, platforms, player,entities):
+
+    def collide(self, xvel, yvel, platforms, player, entities):
         for p in platforms:
             if pygame.sprite.collide_rect(self, p):
                 if xvel < 0:
@@ -161,34 +163,32 @@ class Enemy(Entity):
                     self.rect.right = p.rect.left
                 if yvel > 0:
                     self.rect.bottom = p.rect.top
-                    self.onGround = True
+                    #self.onGround = True
                     self.yvel = 0
                 if yvel < 0:
                     self.rect.top = p.rect.bottom
 
     def move_towards_player(self, player):
         # find normalized direction vector (dx, dy) between enemy and player
-        if (abs(self.rect.x-player.rect.x) < (WIN_WIDTH/4)):
-            dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
-            dist = sqrt(dx**2 + dy**2)
-            try: 
-                dx, dy = dx / dist, -(dy / dist)
-            except ZeroDivisionError:
-                alive = False
+        dx, dy = self.rect.x - player.rect.x, self.rect.y - player.rect.y
+        dist = sqrt(dx**2 + dy**2)
+        try: 
+            dx, dy = dx / dist, -(dy / dist)
+        except ZeroDivisionError:
+            alive = False
         #print(dy)
         # move along this normalized vector towards the player at current speed
-            if dx < 0:
-                self.rect.x += dx * self.xvel*3
-            else:
-                self.rect.x += dx * self.xvel
+        if dx < 0:
+            self.rect.x += dx * self.xvel*3
+        else:
+            self.rect.x += dx * self.xvel
         #print(self.yvel)
         #self.rect.y += dy * self.yvel*1.2
-    #def patrol(self):
-        #pygame.time.Clock()
-        #if (pygame.time.Clock.get_time()%1000%2 == 0):
-        #    self.xvel = -2
-        #else:
-        #    self.xvel = 2
+    def patrol(self):
+        if pygame.time.get_ticks()%2000 == 0:
+            self.xvel = 2
+        else:
+            self.xvel = -2
 
 #class for weapon
 class Weapon(Entity):
@@ -200,14 +200,13 @@ class Weapon(Entity):
         self.image = pygame.image.load("knife.png").convert()#could try for a knife left image as well.
         transparentColor = self.image.get_at((0, 0))
         self.image.set_colorkey(transparentColor)
-        self.image = pygame.transform.scale(self.image, (32,32))
+        self.image = pygame.transform.scale(self.image, (40,40))
 
         self.onScreen = True
-        self.image.convert()
         self.rect = Rect(posX,posY, 8, 8) #passing the current x and y value of our sprite
         
 
-    def update(self, left, right, platforms, entities, enemy, face_left, face_right):
+    def update(self, left, right, platforms, entities, enemies, face_left, face_right):
         if self.onScreen and face_right:
             self.xvel = 12
         if self.onScreen and face_left:
@@ -215,7 +214,8 @@ class Weapon(Entity):
         if self.onScreen and (self.rect.left+posX > HALF_WIDTH):
             self.onScreen = False
         self.rect.left += self.xvel
-        self.collide(self.xvel,0,platforms,entities, enemy) # checking for collisions with platforms
+        for enemy in enemies:
+            self.collide(self.xvel,0,platforms,entities, enemy) # checking for collisions with platforms
     def collide(self, xvel, yvel, platforms, entities, enemy):
          for p in platforms:
             if pygame.sprite.collide_rect(self, p):
@@ -249,64 +249,66 @@ class Player(Entity):
         self.image.convert()
         self.rect = Rect(x, y, 32, 32)
 
-    def update(self, up, down, left, right, running, platforms, enemy, alive):
-        if up:
-            # only jump if on the ground
-            if self.onGround: self.yvel -= 10
-        if down:
-            pass
-        if running:
-            self.xvel = 12
-        if left:
-            self.xvel = -8
-            self.image = pygame.image.load("knight.png").convert()
-            transparentColor = self.image.get_at((0, 0))
-            self.image.set_colorkey(transparentColor)
-            self.image = pygame.transform.scale(self.image, (32,32))
-        if right:
-            self.xvel = 8
-            self.image = pygame.image.load("knightRight.png").convert()
-            transparentColor = self.image.get_at((0, 0))
-            self.image.set_colorkey(transparentColor)
-            self.image = pygame.transform.scale(self.image, (32, 32))
-        if not self.onGround:
-            # only accelerate with gravity if in the air
-            self.yvel += 0.3
-            # max falling speed
-            if self.yvel > 100: self.yvel = 100
-        if not(left or right):
-            self.xvel = 0
-        # increment in x direction
-        self.rect.left += self.xvel
-        # do x-axis collisions
-        self.collide(self.xvel, 0, platforms, enemy, alive)
-        # increment in y direction
-        self.rect.top += self.yvel
-        # assuming we're in the air
-        self.onGround = False
-        # do y-axis collisions
-        self.collide(0, self.yvel, platforms, enemy, alive)
+    def update(self, up, down, left, right, running, platforms, enemies, alive):
+        for enemy in enemies:
+            if up:
+                # only jump if on the ground
+                if self.onGround: self.yvel -= 10
+            if down:
+                pass
+            if running:
+                self.xvel = 12
+            if left:
+                self.xvel = -8
+                self.image = pygame.image.load("knight.png").convert()
+                transparentColor = self.image.get_at((0, 0))
+                self.image.set_colorkey(transparentColor)
+                self.image = pygame.transform.scale(self.image, (32,32))
+            if right:
+                self.xvel = 8
+                self.image = pygame.image.load("knightRight.png").convert()
+                transparentColor = self.image.get_at((0, 0))
+                self.image.set_colorkey(transparentColor)
+                self.image = pygame.transform.scale(self.image, (32, 32))
+            if not self.onGround:
+                # only accelerate with gravity if in the air
+                self.yvel += 0.3
+                # max falling speed
+                if self.yvel > 100: self.yvel = 100
+            if not(left or right):
+                self.xvel = 0
+            # increment in x direction
+            self.rect.left += self.xvel
+            # do x-axis collisions
+            self.collide(self.xvel, 0, platforms, enemies, alive)
+            # increment in y direction
+            self.rect.top += self.yvel
+            # assuming we're in the air    
+            self.onGround = False
+            # do y-axis collisions
+            self.collide(0, self.yvel, platforms, enemies, alive)
 
-    def collide(self, xvel, yvel, platforms, enemy, alive):
+    def collide(self, xvel, yvel, platforms, enemies, alive):
         for p in platforms:
-            if pygame.sprite.collide_rect(self, p):
-                if isinstance(p, ExitBlock1):
-                    scene = GameScene(0, back2, level2)
-                if xvel > 0:
-                    self.rect.right = p.rect.left
-                    #print ("collide right")
-                if xvel < 0:
-                    self.rect.left = p.rect.right
-                    #print ("collide left")
-                if yvel > 0:
-                    self.rect.bottom = p.rect.top
-                    self.onGround = True
-                    self.yvel = 0
-                if yvel < 0:
-                    self.rect.top = p.rect.bottom
-            if pygame.sprite.collide_rect(self,enemy):
-                if enemy:
-                    raise SystemExit("YOU DIED...")
+            for enemy in enemies:
+                if pygame.sprite.collide_rect(self, p):
+                    if isinstance(p, ExitBlock1):
+                        scene = Scene2(0, back2, level2)
+                    if xvel > 0:
+                        self.rect.right = p.rect.left
+                        #print ("collide right")
+                    if xvel < 0:
+                        self.rect.left = p.rect.right
+                        #print ("collide left")
+                    if yvel > 0:
+                        self.rect.bottom = p.rect.top
+                        self.onGround = True
+                        self.yvel = 0
+                    if yvel < 0:
+                        self.rect.top = p.rect.bottom
+                if pygame.sprite.collide_rect(self,enemy):
+                    if enemy:
+                        raise SystemExit("YOU DIED...")
                 
 
 class Platform(Entity):
@@ -347,7 +349,7 @@ class Castle(Platform):
 class ExitBlock1(Platform):
     def __init__(self, x, y):
         Platform.__init__(self, x, y)
-        self.image.fill(Color("#000000"))
+        #self.image.fill(Color(255, 255, 255, 128))
 
 class Scene(object):
     def __init__(self):
@@ -385,7 +387,7 @@ class TitleScene(object):
             if e.type == KEYDOWN and e.key == K_SPACE:
                 self.manager.go_to(GameScene(0, back1))
 
-class SceneMananger(object):
+#class SceneMananger(object):
     def __init__(self):
         self.go_to(TitleScene())
 
@@ -394,9 +396,9 @@ class SceneMananger(object):
         self.scene.manager = self
 
 
-class GameScene(Scene):
+class Scene1(Scene):
     def __init__(self, level, bg, level_set):
-        super(GameScene, self).__init__()
+        super(Scene1, self).__init__()
         global cameraX, cameraY, alive
         alive = True
         back = bg
@@ -411,11 +413,14 @@ class GameScene(Scene):
    # bg.convert()
     #bg.fill(Color("#000000"))
         entities = pygame.sprite.Group()
-        player = Player(32, 32)
-        enemy = Enemy(32, 32)
+        player = Player(100, 600)
+        enemy1 = Enemy(400, 600)
+        enemy2 = Enemy(100, 400)
         platforms = []
         x = y = 0
         level = level_set
+        enemies.append(enemy1)
+        enemies.append(enemy2)
         
     # build the level
         for row in level:
@@ -436,7 +441,7 @@ class GameScene(Scene):
                     p = Castle(x, y)
                     platforms.append(p)
                     entities.add(p)
-                if col == "E":
+                if col == "1":
                     e = ExitBlock1(x, y)
                     platforms.append(e)
                     entities.add(e)
@@ -448,7 +453,9 @@ class GameScene(Scene):
         total_level_height = len(level)*32
         camera = Camera(complex_camera, total_level_width, total_level_height)
         entities.add(player)
-        entities.add(enemy)
+        entities.add(enemy1)
+        entities.add(enemy2)
+
 
         while alive == True:
         #alive = False
@@ -517,16 +524,151 @@ class GameScene(Scene):
             screen.blit(back,(0,0))
             camera.update(player)
         # update player, draw everything else
-            player.update(up, down, left, right, running, platforms, enemy, alive)
-            enemy.update(entities, platforms, attack, player) 
+            player.update(up, down, left, right, running, platforms, enemies, alive)
+            enemy1.update(entities, platforms, attack, player) 
+            enemy2.update(entities, platforms, attack, player) 
             try :
-                weapon.update(left, right, platforms, entities, enemy, face_left, face_right)
+                weapon.update(left, right, platforms, entities, enemies, face_left, face_right)
             except UnboundLocalError:
                 pass
             for e in entities:
                 screen.blit(e.image, camera.apply(e))
             pygame.display.update()
     
+class Scene2(Scene):
+    def __init__(self, level, bg, level_set):
+        super(Scene2, self).__init__()
+        global cameraX, cameraY, alive
+        alive = True
+        back = bg
+        pygame.init()
+        screen = pygame.display.set_mode(DISPLAY, FLAGS, DEPTH)
+        pygame.display.set_caption("SAVE THE PRINCESS")
+        timer = pygame.time.Clock()
+        up = down = left = right = running = attack = defend = face_left = False
+        face_right =True
+        entities = pygame.sprite.Group()
+        player = Player(32, 32)
+        enemy1 = Enemy(400, 32)
+        enemy2 = Enemy(100, 200)
+        platforms = []
+        x = y = 0
+        level = level_set
+        enemies.append(enemy1)
+        enemies.append(enemy2)
+        
+        for row in level:
+            for col in row:
+                if col == "P":
+                    p = Platform(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "G":
+                    p = Grass(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "D":
+                    p = Dirt(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "C":
+                    p = Castle(x, y)
+                    platforms.append(p)
+                    entities.add(p)
+                if col == "1":
+                    e = ExitBlock1(x, y)
+                    platforms.append(e)
+                    entities.add(e)
+                x += 32
+            y += 32
+            x = 0
+
+        total_level_width  = len(level[0])*32
+        total_level_height = len(level)*32
+        camera = Camera(complex_camera, total_level_width, total_level_height)
+        entities.add(player)
+        entities.add(enemy1)
+        entities.add(enemy2)
+
+
+        while alive == True:
+        #alive = False
+            timer.tick(60)
+            global posX, posY ## tracers of the x,y coordinate of the sprite
+            posX = player.rect.x
+            posY = player.rect.y
+            for e in pygame.event.get():
+                if e.type == QUIT: raise SystemExit( "QUIT")
+                if e.type == KEYDOWN and e.key == K_ESCAPE:
+                    raise SystemExit( "ESCAPE")
+                if e.type == KEYDOWN and e.key == K_UP:
+                    up = True
+                if e.type == KEYDOWN and e.key == K_DOWN:
+                    down = True
+                if e.type == KEYDOWN and e.key == K_LEFT:
+                    left = True
+                    try:
+                        if weapon.onScreen:
+                            pass
+                        else:
+                            face_left = True
+                            face_right = False
+                    except UnboundLocalError:
+                        face_right = False
+                        face_left = True
+                if e.type == KEYDOWN and e.key == K_RIGHT:
+                    right = True
+                    try:
+                        if weapon.onScreen:
+                            pass
+                        else:
+                            face_right = True
+                            face_left = False
+                    except UnboundLocalError:
+                        face_right = True
+                        face_left = True
+                if e.type == KEYDOWN and e.key == K_SPACE:
+                    running = True
+                if e.type == KEYDOWN and e.key == K_a:
+                    try:
+                        entities.remove(weapon)
+                    except UnboundLocalError:
+                        pass                
+                    attack = True   
+                    weapon = Weapon(8,8)                                    
+                    entities.add(weapon)
+            
+                if e.type == KEYUP and e.key == K_UP:
+                    up = False
+                if e.type == KEYUP and e.key == K_DOWN:
+                    down = False
+                if e.type == KEYUP and e.key == K_RIGHT:
+                    right = False
+                if e.type == KEYUP and e.key == K_LEFT:
+                    left = False
+                if e.type == KEYUP and e.key == K_a:
+                    attack = False
+                
+
+        # draw background
+        #for y in range(32):
+        #   for x in range(32):
+        #      screen.blit(bg, (x * 32, y * 32))
+
+            screen.blit(back,(0,0))
+            camera.update(player)
+        # update player, draw everything else
+            player.update(up, down, left, right, running, platforms, enemies, alive)
+            enemy1.update(entities, platforms, attack, player) 
+            enemy2.update(entities, platforms, attack, player) 
+            try :
+                weapon.update(left, right, platforms, entities, enemies, face_left, face_right)
+            except UnboundLocalError:
+                pass
+            for e in entities:
+                screen.blit(e.image, camera.apply(e))
+            pygame.display.update()
+            
 if __name__ == "__main__":
     main()
 
